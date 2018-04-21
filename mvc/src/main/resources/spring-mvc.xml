@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://www.springframework.org/schema/context
+  http://www.springframework.org/schema/context/spring-context.xsd
+ http://www.springframework.org/schema/mvc
+ http://www.springframework.org/schema/mvc/spring-mvc.xsd
+ http://www.springframework.org/schema/task 
+	   http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<task:executor id="executor" pool-size="10" />
+	<task:scheduler id="scheduler" pool-size="10" />
+	<task:annotation-driven scheduler="scheduler"
+		executor="executor" proxy-target-class="true" />
+	<!-- 启动注解驱动的Spring MVC功能，注册请求url和注解POJO类方法的映射 -->
+	<!-- 类型转换及数据格式化 -->
+	<bean id="conversionService"
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean" />
+		
+	<bean name="quartzScheduler"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<!-- <property name="dataSource" ref="dataSource" /> -->
+		<property name="applicationContextSchedulerContextKey" value="applicationContextKey" />
+		<property name="configLocation" value="classpath:properties/quartz.properties" />
+	</bean>
+	
+	<!-- 会自动注册了validator ConversionService -->
+	<mvc:annotation-driven conversion-service="conversionService"
+		content-negotiation-manager="contentNegotiationManager"
+		enable-matrix-variables="true">
+
+		<!--enableMatrixVariables="true"> -->
+		<!-- 异步支持 默认30秒超时 -->
+		<mvc:async-support default-timeout="30000"
+			task-executor="executor" />
+
+
+		<mvc:message-converters register-defaults="true">
+			<!-- StringHttpMessageConverter编码为UTF-8，防止乱码 -->
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<constructor-arg value="UTF-8" />
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/plain;charset=utf-8</value>
+						<value>text/html;charset=utf-8</value>
+						<value>text/json;charset=utf-8</value>
+						<value>application/json;charset=utf-8</value>
+
+					</list>
+				</property>
+			</bean>
+
+			<!-- 避免IE执行AJAX时,返回JSON出现下载文件 -->
+			<bean id="fastJsonHttpMessageConverter"
+				class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						<value>text/plain;charset=utf-8</value>
+						<value>text/html;charset=utf-8</value>
+						<value>text/json;charset=utf-8</value>
+						<value>application/json;charset=UTF-8</value>
+					</list>
+				</property>
+				<property name="features">
+					<!-- 这个地方加上这个功能吧，能自己配置一些东西，比如时间的格式化，null输出""等等 -->
+					<list>
+						<value>WriteMapNullValue</value>
+						<value>WriteNullStringAsEmpty</value>
+						<value>WriteNullListAsEmpty</value>
+						<value>WriteNullNumberAsZero</value>
+						<value>WriteNullBooleanAsFalse</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+	<!-- 启动包扫描功能，以便注册带有@Controllers、@service、@repository、@Component等注解的类成为spring的bean -->
+	<!-- 开启controller注解支持 -->
+	<context:component-scan base-package="controller"
+		use-default-filters="false">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan>
+
+	<!-- 内容协商管理器 -->
+	<!--1、首先检查路径扩展名（如my.pdf）；2、其次检查Parameter（如my?format=pdf）；3、检查Accept Header -->
+	<bean id="contentNegotiationManager"
+		class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+		<!-- 扩展名至mimeType的映射,即 /user.json => application/json -->
+		<property name="favorPathExtension" value="true" />
+		<!-- 用于开启 /userinfo/123?format=json 的支持 -->
+		<property name="favorParameter" value="true" />
+		<property name="parameterName" value="format" />
+		<!-- 是否忽略Accept Header -->
+		<property name="ignoreAcceptHeader" value="false" />
+
+		<property name="mediaTypes"> <!--扩展名到MIME的映射；favorPathExtension, favorParameter是true时起作用 -->
+			<value>
+				json=application/json
+				xml=application/xml
+				html=text/html
+			</value>
+		</property>
+		<!-- 默认的content type -->
+		<property name="defaultContentType" value="text/html" />
+	</bean>
+
+	<!-- 当在web.xml 中 DispatcherServlet使用 <url-pattern>/</url-pattern> 映射时，能映射静态资源 -->
+	<mvc:default-servlet-handler />
+
+	<!-- 静态资源映射 -->
+	<mvc:resources mapping="/**" location="/WEB-INF/static/" />
+
+
+	<!-- 拦截器设置 -->
+	<mvc:interceptors>
+		<bean
+			class="org.springframework.web.servlet.handler.ConversionServiceExposingInterceptor">
+			<constructor-arg ref="conversionService" />
+		</bean>
+
+
+	</mvc:interceptors>
+
+	<!-- 对模型视图名称的解析，在请求时模型视图名称添加前后缀 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/views/" />    <!-- 前缀 -->
+		<property name="suffix" value=".jsp" />    <!-- 后缀 -->
+	</bean>
+	<!-- 访问静态文件（jpg,js,css）的方法 -->
+	<!--<mvc:resources location="/files/" mapping="/files/**" /> -->
+	<!--<mvc:resources location="/scripts/" mapping="/scripts/**" /> -->
+	<!--<mvc:resources location="/styles/" mapping="/styles/**" /> -->
+	<!--<mvc:resources location="/Views/" mapping="/Views/**" /> -->
+</beans>

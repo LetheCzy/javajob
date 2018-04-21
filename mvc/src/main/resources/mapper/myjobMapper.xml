@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="czy.site.dao.myjobMapper">
+    <resultMap id="BaseResultMap" type="czy.site.model.myjob">
+        <id column="Id" jdbcType="INTEGER" property="id" />
+        <result column="JobType" jdbcType="INTEGER" property="jobtype" />
+        <result column="JobName" jdbcType="VARCHAR" property="jobname" />
+        <result column="JobCron" jdbcType="VARCHAR" property="jobcron" />
+        <result column="JobStatus" jdbcType="INTEGER" property="jobstatus" />
+        <result column="jobDescription" jdbcType="VARCHAR" property="jobdescription" />
+        <result column="CreatorName" jdbcType="VARCHAR" property="creatorname" />
+        <result column="CreatorNum" jdbcType="VARCHAR" property="creatornum" />
+        <result column="CreatDate" jdbcType="DATE" property="creatdate" javaType="java.util.Date"/>
+        <result column="LastModifyName" jdbcType="VARCHAR" property="lastmodifyname" />
+        <result column="LastModifyNum" jdbcType="VARCHAR" property="lastmodifynum" />
+        <result column="lastModifyDate" jdbcType="DATE" property="lastmodifydate" javaType="java.util.Date"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        Id, JobType, JobName, JobCron,JobStatus,jobDescription,CreatorName,CreatorNum,CreatDate,LastModifyName,LastModifyNum,lastModifyDate
+    </sql>
+    <select id="selectById" parameterType="Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from myjob
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="selectByCondition" parameterType="czy.site.model.myjob" resultMap="BaseResultMap">
+         SELECT
+         <include refid="Base_Column_List"/>
+         from myjob
+         <where>
+             1=1
+             <if test="id != null and id>0">
+                 and Id=#{id,jdbcType=INTEGER}
+             </if>
+             <if test="jobname != null and jobname!=''">
+                 and JobName=#{jobname,jdbcType=VARCHAR}
+             </if>
+             <if test="jobstatus != null and jobstatus>0">
+                 and JobStatus=#{jobstatus,jdbcType=INTEGER}
+             </if>
+         </where>
+     </select>
+     <delete id="deleteByPrimaryKey" parameterType="Integer">
+         delete from myjob
+         where Id = #{id,jdbcType=INTEGER}
+     </delete>
+     <insert id="insert" parameterType="czy.site.model.myjob">
+         insert into myjob (JobType, JobName, JobCron,JobStatus,jobDescription,
+         CreatorName,CreatorNum,CreatDate,LastModifyName,LastModifyNum,lastModifyDate)
+         values (#{jobtype,jdbcType=INTEGER}, 
+         #{jobname,jdbcType=VARCHAR},
+         #{jobcron,jdbcType=VARCHAR},
+         #{jobstatus,jdbcType=INTEGER},
+         #{jobdescription,jdbcType=VARCHAR},
+         #{creatorname,jdbcType=VARCHAR},
+         #{creatornum,jdbcType=VARCHAR},
+         #{creatdate,jdbcType=DATE},
+         #{lastmodifyname,jdbcType=VARCHAR},
+         #{lastmodifynum,jdbcType=VARCHAR},
+         #{lastmodifydate,jdbcType=DATE}
+         )
+     </insert>
+    <!--  <insert id="insertSelective" parameterType="Entity.Student">
+         insert into student
+         <trim prefix="(" suffix=")" suffixOverrides=",">
+             <if test="uid != null">
+                 Uid,
+             </if>
+             <if test="name != null">
+                 Name,
+             </if>
+             <if test="age != null">
+                 Age,
+             </if>
+             <if test="classid != null">
+                 ClassId,
+             </if>
+         </trim>
+         <trim prefix="values (" suffix=")" suffixOverrides=",">
+             <if test="uid != null">
+                 #{uid,jdbcType=BINARY},
+             </if>
+             <if test="name != null">
+                 #{name,jdbcType=VARCHAR},
+             </if>
+             <if test="age != null">
+                 #{age,jdbcType=INTEGER},
+             </if>
+             <if test="classid != null">
+                 #{classid,jdbcType=INTEGER},
+             </if>
+         </trim>
+     </insert> -->
+     <update id="updateByPrimaryKeySelective" parameterType="czy.site.model.myjob">
+         update myjob
+         <set>
+             <if test="jobtype != null">
+                 JobType = #{jobtype,jdbcType=INTEGER},
+             </if>
+             <if test="jobname != null">
+                 JobName = #{jobname,jdbcType=VARCHAR},
+             </if>
+             <if test="jobcron != null">
+                 JobCron = #{jobcron,jdbcType=VARCHAR},
+             </if>
+             <if test="jobstatus != null">
+                 JobStatus = #{jobstatus,jdbcType=INTEGER},
+             </if>
+             <if test="jobdescription != null">
+                 jobDescription = #{jobdescription,jdbcType=VARCHAR},
+             </if>
+             <if test="lastmodifyname != null">
+                 LastModifyName = #{lastmodifyname,jdbcType=VARCHAR},
+             </if>
+             <if test="lastmodifynum != null">
+                 LastModifyNum = #{lastmodifynum,jdbcType=VARCHAR},
+             </if>
+             <if test="lastmodifydate != null">
+                 lastModifyDate = #{lastmodifydate,jdbcType=DATE},
+             </if>
+         </set>
+         where Id = #{id,jdbcType=INTEGER}
+     </update>
+     <!-- <update id="updateByPrimaryKey" parameterType="Entity.Student">
+         update student
+         set Name = #{name,jdbcType=VARCHAR},
+         Age = #{age,jdbcType=INTEGER},
+         ClassId = #{classid,jdbcType=INTEGER}
+         where Uid = #{uid,jdbcType=BINARY}
+     </update> -->
+     <select id="selectExsitByNameAndId" resultType="Integer">
+         select count(1) as TotalCount from myjob
+         <where>
+             JobName = #{jobName}
+             <if test="id != null and id>0">
+                 and Id!=#{id,jdbcType=INTEGER}
+             </if>
+         </where>
+     </select>
+ </mapper>
