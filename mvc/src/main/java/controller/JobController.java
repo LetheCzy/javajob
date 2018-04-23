@@ -23,6 +23,7 @@ import czy.site.common.log.LogHelper;
 import czy.site.common.quartz.JobManagerBase;
 import czy.site.common.quartz.JobStaticConfigValue;
 import czy.site.common.quartz.JobStruct;
+import czy.site.convert.ConvertHelper;
 import czy.site.model.JobStatus;
 import czy.site.model.myjob;
 import czy.site.service.jobservice;
@@ -63,7 +64,7 @@ public class JobController {
 		myjob jobObj = new myjob();
 		if (model != null) {
 			jobObj.setJobname(model.getJobname());
-			jobObj.setJobstatus(Integer.parseInt(model.getJobstatus()));
+			jobObj.setJobstatus(ConvertHelper.ToInt(model.getJobstatus(),0));
 
 		}
 		// String tString = JSON.toJSONString(jobObj);
